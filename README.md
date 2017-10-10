@@ -1,4 +1,5 @@
-# Read me first
+# Readme
+# Smart fishtank project
 
 ## Setup
 0. Download Arduino IDE version v1.8.5 or later from https://www.arduino.cc/en/Main/Donate and open once to create /libraries
