@@ -52,10 +52,11 @@ void TaskDisplayAndButtons(void *pvParameters)
   lcd.setCursor(0,0);
   lcd.print("TaskDnB set.");
   uint16_t iterator = 0;
+  
   for (;;)
   {
     //@TODO Add continous functionality
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    vTaskDelay(100 / portTICK_PERIOD_MS);
     //@TODO read pin state (all buttons are on one pin) and implement DEBOUNCE
     //Find a way to check is message is correctly displayed
     //Implement a menu (via a state machine) with "screens" navigable, has a selectable luminosity and a 'feed now'
@@ -120,9 +121,10 @@ void TaskWater(void *pvParameters)
 //Functions:
 int ButtonRead()
 {
-  uint8_t readA0;
+  volatile uint8_t readA0;
   readA0 = analogRead(0);
-  delay(5);
+  vTaskDelay(5 / portTICK_PERIOD_MS);
+  
   if (readA0 < 50)
   {
     return b_Right;  
