@@ -1,5 +1,7 @@
+//Libraries
 #include <Arduino_FreeRTOS.h>
 #include <LiquidCrystal.h>
+
 //LCD
 LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
 
@@ -121,6 +123,8 @@ void TaskWater(void *pvParameters)
 //Functions:
 int ButtonRead()
 {
+  /*On Arduino UNO can't implement an interrupt on A0 pin, therefore polling is required.*/
+  
   volatile uint8_t readA0;
   readA0 = analogRead(0);
   vTaskDelay(5 / portTICK_PERIOD_MS);
