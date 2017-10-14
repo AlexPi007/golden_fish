@@ -31,6 +31,14 @@ void setup()
   //Hardware init if needed global and comments about task reserved hardware:
   //LCD reserved pins: 4;5;6;7;8;9
   //Button read pin: A0
+  //A1 water lvl sensor
+  //A2 / A3 FotoRez
+  //P13 Feeder (MPP)
+  //P12 Pump
+  //P11 / P10 Valve
+  //P0 / P1 / P2 RTC
+  // P3 LED
+  
 
   //Tasks init:
   xTaskCreate(TaskDisplayAndButtons, (const portCHAR *)"DisplayAndButtons", 128, NULL, 2, NULL);
