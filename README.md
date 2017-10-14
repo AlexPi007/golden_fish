@@ -13,6 +13,6 @@
 
 	Go in to the /Documents/Arduino/libraries and change files there for changes to occur within the libraries used in the project
 	
-##Git Cheat Sheet
+## Git Cheat Sheet
 
 1. Link here https://www.git-tower.com/blog/git-cheat-sheet
