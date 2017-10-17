@@ -11,8 +11,9 @@
 
 ## How to make configuration changes
 
-	Go in to the /Documents/Arduino/libraries and change files there for changes to occur within the libraries used in the project
+1. Go in to the /Documents/Arduino/libraries and change files there for changes to occur within the libraries used in the project
 	
-## Git Cheat Sheet
+## Other documents
 
-1. Link here https://www.git-tower.com/blog/git-cheat-sheet
+1. GitCheatSheet here https://www.git-tower.com/blog/git-cheat-sheet
+2. C conventions here https://users.ece.cmu.edu/~eno/coding/CCodingStandard.html
