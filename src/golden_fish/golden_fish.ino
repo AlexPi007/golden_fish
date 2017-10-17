@@ -1,3 +1,14 @@
+//Hardware init if needed global and comments about task reserved hardware:
+//LCD reserved pins: 4;5;6;7;8;9
+//Button read pin: A0
+//A1 water lvl sensor
+//A2 / A3 FotoRez
+//P13 Feeder (MPP)
+//P12 Pump
+//P11 / P10 Valve
+//P0 / P1 / P2 RTC
+// P3 LED
+  
 //Libraries
 #include <Arduino_FreeRTOS.h>
 #include <LiquidCrystal.h>
@@ -23,29 +34,17 @@ void TaskLights(void *pvParameters);
 void TaskLWater(void *pvParameters);
 
 //Forward general function declarations
-int ButtonRead();
+int button_read();
 
 
 void setup()
 {
-  //Hardware init if needed global and comments about task reserved hardware:
-  //LCD reserved pins: 4;5;6;7;8;9
-  //Button read pin: A0
-  //A1 water lvl sensor
-  //A2 / A3 FotoRez
-  //P13 Feeder (MPP)
-  //P12 Pump
-  //P11 / P10 Valve
-  //P0 / P1 / P2 RTC
-  // P3 LED
-  
-
   //Tasks init:
-  xTaskCreate(TaskDisplayAndButtons, (const portCHAR *)"DisplayAndButtons", 128, NULL, 2, NULL);
-  xTaskCreate(TaskSensorsRead, (const portCHAR *)"SensorRead", 128, NULL, 1, NULL);
-  xTaskCreate(TaskFeed, (const portCHAR *)"Feed", 128, NULL, 3, NULL);
-  xTaskCreate(TaskLights, (const portCHAR *)"Lights", 128, NULL, 1, NULL);
-  xTaskCreate(TaskWater, (const portCHAR *)"Water", 128, NULL, 3, NULL);
+  xTaskCreate(&TaskDisplayAndButtons, (const portCHAR *)"DisplayAndButtons", 128, NULL, 2, NULL);
+  xTaskCreate(&TaskSensorsRead, (const portCHAR *)"SensorRead", 128, NULL, 1, NULL);
+  xTaskCreate(&TaskFeed, (const portCHAR *)"Feed", 128, NULL, 3, NULL);
+  xTaskCreate(&TaskLights, (const portCHAR *)"Lights", 128, NULL, 1, NULL);
+  xTaskCreate(&TaskWater, (const portCHAR *)"Water", 128, NULL, 3, NULL);
 }
 
 void loop()
@@ -129,7 +128,7 @@ void TaskWater(void *pvParameters)
 
 
 //Functions:
-int ButtonRead()
+int button_read()
 {
   /*On Arduino UNO can't implement an interrupt on A0 pin, therefore polling is required.*/
   
