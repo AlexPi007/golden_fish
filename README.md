@@ -3,12 +3,12 @@
 
 ## Setup
 0. Download Arduino IDE version v1.8.5 or later from [here](https://www.arduino.cc/en/Main/Donate) and open once to create /libraries
-0.1. Download and install [MSYS32](http://www.msys2.org/), also works as terminal emulator
-0.2. Clone FreeRTOS from [here](https://github.com/feilipu/Arduino_FreeRTOS_Library.git)
-0.3. Open once Arduino IDE so it can create it's libraries folder
-1. Copy the FreeRTOS library in to C:/Users/XXXX/Documents/Arduino/libraries (where XXX is the user's folder)
-2. User the sketch with arduino v1.8.5 or later
-3. Check the examples in the library for further information
+1. Download and install [MSYS32](http://www.msys2.org/), also works as terminal emulator
+2. Clone FreeRTOS from [here](https://github.com/feilipu/Arduino_FreeRTOS_Library.git)
+3. Open once Arduino IDE so it can create it's libraries folder
+4. Copy the FreeRTOS library in to C:/Users/XXXX/Documents/Arduino/libraries (where XXX is the user's folder)
+5. User the sketch with arduino v1.8.5 or later
+6. Check the examples in the library for further information
 
 ## How to make configuration changes
 
