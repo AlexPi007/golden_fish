@@ -7,7 +7,7 @@
 //P12 Pump
 //P11 / P10 Valve
 //P0 / P1 / P2 RTC
-// P3 LED
+//P3
   
 //Libraries
 #include <Arduino_FreeRTOS.h>
