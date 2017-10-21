@@ -1,20 +1,21 @@
 //Hardware init if needed global and comments about task reserved hardware:
-//LCD reserved pins: 4;5;6;7;8;9
+//P5(CE)/6(I/O)/7(SC) RTC
 //Button read pin: A0
 //A1 water lvl sensor
 //A2 / A3 FotoRez
 //P13 Feeder (MPP)
 //P12 Pump
 //P11 / P10 Valve
-//P0 / P1 / P2 RTC
 // P3 LED
   
 //Libraries
 #include <Arduino_FreeRTOS.h>
 #include <LiquidCrystal.h>
+#include <stdio.h>
+#include <DS1302.h>
 
 //LCD
-LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
+//LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
 
 //Defines:
 #define b_Select 0
@@ -36,10 +37,32 @@ void TaskLRTC(void *pvParameters);
 
 //Forward general function declarations
 int button_read();
+void rtc_set_time();
+int rtc_get_time();
 
+
+namespace {
+// Set the appropriate digital I/O pin connections. These are the pin
+// assignments for the Arduino as well for as the DS1302 chip. See the DS1302
+// datasheet:
+//   http://datasheets.maximintegrated.com/en/ds/DS1302.pdf
+const int kCePin   = 5;  // Chip Enable
+const int kIoPin   = 6;  // Input/Output
+const int kSclkPin = 7;  // Serial Clock
+
+// Create a DS1302 object.
+DS1302 rtc(kCePin, kIoPin, kSclkPin);
+}
 
 void setup()
 {
+  Serial.begin(9600);
+  rtc.writeProtect(false);
+  rtc.halt(false);
+  Time t(2017, 10, 22, 9, 53, 10, Time::kSaturday);
+  rtc.time(t);
+//  vTaskDelay(100 / portTICK_PERIOD_MS);
+  
   //Tasks init:
 //  xTaskCreate(&TaskDisplayAndButtons, (const portCHAR *)"DisplayAndButtons", 128, NULL, 2, NULL);
   xTaskCreate(&TaskSensorsRead, (const portCHAR *)"SensorRead", 128, NULL, 1, NULL);
@@ -54,25 +77,25 @@ void loop()
 // DO NOT ADD CODE HERE. Things are done ONYL in Tasks.
 }
 
-void TaskDisplayAndButtons(void *pvParameters)
-{
-  (void) pvParameters;
-  //@TODO Add initial task setup
-  lcd.begin(16, 2);
-  lcd.clear();
-  lcd.setCursor(0,0);
-  lcd.print("TaskDnB set.");
-  uint16_t iterator = 0;
-  
-  for (;;)
-  {
-    //@TODO Add continous functionality
-    vTaskDelay(100 / portTICK_PERIOD_MS);
-    //@TODO read pin state (all buttons are on one pin) and implement DEBOUNCE
-    //Find a way to check is message is correctly displayed
-    //Implement a menu (via a state machine) with "screens" navigable, has a selectable luminosity and a 'feed now'
-  }
-}
+//void TaskDisplayAndButtons(void *pvParameters)
+//{
+//  (void) pvParameters;
+//  //@TODO Add initial task setup
+//  lcd.begin(16, 2);
+//  lcd.clear();
+//  lcd.setCursor(0,0);
+//  lcd.print("TaskDnB set.");
+//  uint16_t iterator = 0;
+//  
+//  for (;;)
+//  {
+//    //@TODO Add continous functionality
+//    vTaskDelay(100 / portTICK_PERIOD_MS);
+//    //@TODO read pin state (all buttons are on one pin) and implement DEBOUNCE
+//    //Find a way to check is message is correctly displayed
+//    //Implement a menu (via a state machine) with "screens" navigable, has a selectable luminosity and a 'feed now'
+//  }
+//}
 
 void TaskSensorsRead(void *pvParameters)
 {
@@ -132,15 +155,19 @@ void TaskRTC(void *pvParameters)
 {
   (void) pvParameters;
 
+  Serial.print("RTC TASK SET\n");
   for(;;)
   {
-    
+    rtc_get_time();
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
   }
 }
 
 //Functions:
 int button_read()
 {
+  
+  
   /*On Arduino UNO can't implement an interrupt on A0 pin, therefore polling is required.*/
   
   volatile uint8_t readA0;
@@ -170,3 +197,19 @@ int button_read()
   //If none of the above is true, means an error has occured.
   return b_ERROR;
 }
+
+int rtc_get_time()
+{
+  Time t = rtc.time();
+
+  // Format the time and date and insert into the temporary buffer.
+  char buf[50];
+  snprintf(buf, sizeof(buf), "%04d-%02d-%02d %02d:%02d:%02d",
+           t.yr, t.mon, t.date,
+           t.hr, t.min, t.sec);
+
+  // Print the formatted string to serial so we can see the time.
+  Serial.println(buf);
+  return 1;
+}
+
