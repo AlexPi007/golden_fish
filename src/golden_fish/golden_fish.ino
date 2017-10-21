@@ -32,6 +32,7 @@ void TaskSensorsRead(void *pvParameters);
 void TaskFeed(void *pvParameters);
 void TaskLights(void *pvParameters);
 void TaskLWater(void *pvParameters);
+void TaskLRTC(void *pvParameters);
 
 //Forward general function declarations
 int button_read();
@@ -40,11 +41,12 @@ int button_read();
 void setup()
 {
   //Tasks init:
-  xTaskCreate(&TaskDisplayAndButtons, (const portCHAR *)"DisplayAndButtons", 128, NULL, 2, NULL);
+//  xTaskCreate(&TaskDisplayAndButtons, (const portCHAR *)"DisplayAndButtons", 128, NULL, 2, NULL);
   xTaskCreate(&TaskSensorsRead, (const portCHAR *)"SensorRead", 128, NULL, 1, NULL);
   xTaskCreate(&TaskFeed, (const portCHAR *)"Feed", 128, NULL, 3, NULL);
-  xTaskCreate(&TaskLights, (const portCHAR *)"Lights", 128, NULL, 1, NULL);
+  xTaskCreate(&TaskLights, (const portCHAR *)"Lights", 128, NULL, 3, NULL);
   xTaskCreate(&TaskWater, (const portCHAR *)"Water", 128, NULL, 3, NULL);
+  xTaskCreate(&TaskRTC, (const portCHAR *)"RTC", 128, NULL, 1, NULL);
 }
 
 void loop()
@@ -126,6 +128,15 @@ void TaskWater(void *pvParameters)
   }
 }
 
+void TaskRTC(void *pvParameters)
+{
+  (void) pvParameters;
+
+  for(;;)
+  {
+    
+  }
+}
 
 //Functions:
 int button_read()
