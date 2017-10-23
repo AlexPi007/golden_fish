@@ -1,50 +1,53 @@
 //Hardware init if needed global and comments about task reserved hardware:
-//LCD reserved pins: 4;5;6;7;8;9
-//Button read pin: A0
-//A1 water lvl sensor
-//A2 / A3 FotoRez
+//A4 / A5 RTC via i2c
+//A0 water lvl sensor
 //P13 Feeder (MPP)
 //P12 Pump
 //P11 / P10 Valve
+<<<<<<< HEAD
 //P0 / P1 / P2 RTC
 //P3
+=======
+// P9 LED
+>>>>>>> master
   
 //Libraries
 #include <Arduino_FreeRTOS.h>
 #include <LiquidCrystal.h>
+#include <stdio.h>
+#include <Wire.h>
+#include "RTClib.h"
 
-//LCD
-LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
-
-//Defines:
-#define b_Select 0
-#define b_Left 1
-#define b_Right 2
-#define b_Up 3
-#define b_Down 4
-#define b_ERROR 5
-#define TRUE 1
-#define FALASE 0
+//Global variables
+RTC_DS1307 RTC;
+DateTime currentTime;
 
 //Forward task functions declarations
-void TaskDisplayAndButtons(void *pvParameters);
 void TaskSensorsRead(void *pvParameters);
 void TaskFeed(void *pvParameters);
-void TaskLights(void *pvParameters);
 void TaskLWater(void *pvParameters);
 void TaskLRTC(void *pvParameters);
 
 //Forward general function declarations
-int button_read();
+void rtc_set_time();
+void rtc_get_time();
 
 
 void setup()
 {
+  Serial.begin(9600);
+  Wire.begin();
+  RTC.begin();
+  if (! RTC.isrunning())
+  {
+    Serial.println("RTC is NOT running!");
+    // following line sets the RTC to the date & time this sketch was compiled
+    RTC.adjust(DateTime(__DATE__, __TIME__));
+  }
+//  rtc_get_time();
   //Tasks init:
-//  xTaskCreate(&TaskDisplayAndButtons, (const portCHAR *)"DisplayAndButtons", 128, NULL, 2, NULL);
   xTaskCreate(&TaskSensorsRead, (const portCHAR *)"SensorRead", 128, NULL, 1, NULL);
   xTaskCreate(&TaskFeed, (const portCHAR *)"Feed", 128, NULL, 3, NULL);
-  xTaskCreate(&TaskLights, (const portCHAR *)"Lights", 128, NULL, 3, NULL);
   xTaskCreate(&TaskWater, (const portCHAR *)"Water", 128, NULL, 3, NULL);
   xTaskCreate(&TaskRTC, (const portCHAR *)"RTC", 128, NULL, 1, NULL);
 }
@@ -52,26 +55,6 @@ void setup()
 void loop()
 {
 // DO NOT ADD CODE HERE. Things are done ONYL in Tasks.
-}
-
-void TaskDisplayAndButtons(void *pvParameters)
-{
-  (void) pvParameters;
-  //@TODO Add initial task setup
-  lcd.begin(16, 2);
-  lcd.clear();
-  lcd.setCursor(0,0);
-  lcd.print("TaskDnB set.");
-  uint16_t iterator = 0;
-  
-  for (;;)
-  {
-    //@TODO Add continous functionality
-    vTaskDelay(100 / portTICK_PERIOD_MS);
-    //@TODO read pin state (all buttons are on one pin) and implement DEBOUNCE
-    //Find a way to check is message is correctly displayed
-    //Implement a menu (via a state machine) with "screens" navigable, has a selectable luminosity and a 'feed now'
-  }
 }
 
 void TaskSensorsRead(void *pvParameters)
@@ -103,18 +86,6 @@ void TaskFeed(void *pvParameters)
   }
 }
 
-void TaskLights(void *pvParameters)
-{
-  (void) pvParameters;
-  //@TODO Add initial task setup
-
-   for (;;)
-  {
-    //@TODO Add continous functionality
-    vTaskDelay(100 / portTICK_PERIOD_MS);
-  }
-}
-
 void TaskWater(void *pvParameters)
 {
   (void) pvParameters;
@@ -131,42 +102,18 @@ void TaskWater(void *pvParameters)
 void TaskRTC(void *pvParameters)
 {
   (void) pvParameters;
-
   for(;;)
   {
+    rtc_get_time();
     
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
   }
 }
 
 //Functions:
-int button_read()
+
+void rtc_get_time()
 {
-  /*On Arduino UNO can't implement an interrupt on A0 pin, therefore polling is required.*/
-  
-  volatile uint8_t readA0;
-  readA0 = analogRead(0);
-  vTaskDelay(5 / portTICK_PERIOD_MS);
-  
-  if (readA0 < 50)
-  {
-    return b_Right;  
-  }
-  if (readA0 < 195)
-  {
-    return b_Up; 
-  }
-  if (readA0 < 380)
-  {
-    return b_Down; 
-  }
-  if (readA0 < 555)
-  {
-    return b_Left; 
-  }
-  if (readA0 < 790)
-  {
-    return b_Select;   
-  }
-  //If none of the above is true, means an error has occured.
-  return b_ERROR;
+  currentTime = RTC.now();
 }
+
