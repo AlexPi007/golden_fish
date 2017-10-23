@@ -4,13 +4,11 @@
 ## Setup
 0. Download Arduino IDE version v1.8.5 or later from [here](https://www.arduino.cc/en/Main/Donate) and open once to create /libraries
 1. Download and install [MSYS32](http://www.msys2.org/), also works as terminal emulator
-2. Clone FreeRTOS from [here](https://github.com/feilipu/Arduino_FreeRTOS_Library.git)
-3. Clone RTC library from [here](https://github.com/msparks/arduino-ds1302)
-4. Open once Arduino IDE so it can create it's libraries folder
-4. Copy the FreeRTOS library in to C:/Users/XXXX/Documents/Arduino/libraries (where XXX is the user's folder)
-5. Copy RTC library into Arduino Libraries
-6. User the sketch with arduino v1.8.5 or later
-7. Check the examples in the library for further information
+2. Arduino libraries location C:/Users/XXXX/Documents/Arduino/libraries (where XXX is the user's folder)
+3. Unzip FreeRTOS to Arduino libraries, source [here](https://github.com/feilipu/Arduino_FreeRTOS_Library.git)
+4. Unzip the given RTC library in to Arduino libraries, source [here](https://www.elecrow.com/wiki/index.php?title=File:RTC.zip)
+* User the sketch with arduino v1.8.5 or later
+* Check the examples in the library for further information
 
 ## How to make configuration changes
 
