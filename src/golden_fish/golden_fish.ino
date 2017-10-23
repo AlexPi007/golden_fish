@@ -13,7 +13,9 @@
   
 //Libraries
 #include <Arduino_FreeRTOS.h>
-#include <LiquidCrystal.h>
+#include <event_groups.h>
+//#include <event_groups.c>
+#include <FreeRTOSConfig.h>
 #include <stdio.h>
 #include <Wire.h>
 #include "RTClib.h"
@@ -22,6 +24,12 @@
 RTC_DS1307 RTC;
 DateTime currentTime;
 
+EventGroupHandle_t rtc_event_group;
+int LIGHT = (1 << 0);
+int FEED = (1 << 1);
+int DRAIN = (1 << 2);
+int SENSOR = (1 << 3);
+
 //Forward task functions declarations
 void TaskSensorsRead(void *pvParameters);
 void TaskFeed(void *pvParameters);
@@ -29,7 +37,6 @@ void TaskLWater(void *pvParameters);
 void TaskLRTC(void *pvParameters);
 
 //Forward general function declarations
-void rtc_set_time();
 void rtc_get_time();
 
 
@@ -38,13 +45,22 @@ void setup()
   Serial.begin(9600);
   Wire.begin();
   RTC.begin();
-  if (! RTC.isrunning())
+  if (!RTC.isrunning())
   {
     Serial.println("RTC is NOT running!");
     // following line sets the RTC to the date & time this sketch was compiled
     RTC.adjust(DateTime(__DATE__, __TIME__));
   }
-//  rtc_get_time();
+
+  rtc_event_group = xEventGroupCreate();
+  //portMAX_DELAY makes a mutex wait forever
+  if( rtc_event_group == NULL )
+  {
+      /* The event group was not created because there was insufficient
+      FreeRTOS heap available. */
+      Serial.println("Problem");
+  }
+  
   //Tasks init:
   xTaskCreate(&TaskSensorsRead, (const portCHAR *)"SensorRead", 128, NULL, 1, NULL);
   xTaskCreate(&TaskFeed, (const portCHAR *)"Feed", 128, NULL, 3, NULL);
@@ -64,11 +80,12 @@ void TaskSensorsRead(void *pvParameters)
 
    for (;;)
   {
-    //@TODO Add continous functionality
+    //Calling this task once every 30s
+    xEventGroupWaitBits(rtc_event_group, SENSOR, pdTRUE, pdTRUE, portMAX_DELAY);
+    Serial.println("SENSOR");
     vTaskDelay(100 / portTICK_PERIOD_MS);
 
     //@TODO one function per sensor to read
-    //Introduce Delays in readings, so polling rate is not too high, preferably at the beginning of the for(;;)
     //Set results in gobal variables (as small as possible) so they can be used by other tasks
   }
 }
@@ -80,9 +97,10 @@ void TaskFeed(void *pvParameters)
 
    for (;;)
   {
-    //@TODO Add continous functionality
-    vTaskDelay(100 / portTICK_PERIOD_MS);
-    //@TODO checks flags set by user or time to feed the fish
+    //Calling task once every 60s
+    xEventGroupWaitBits(rtc_event_group, FEED, pdTRUE, pdTRUE, portMAX_DELAY);
+    Serial.println("FEED");
+    vTaskDelay(3000 / portTICK_PERIOD_MS);
   }
 }
 
@@ -102,11 +120,32 @@ void TaskWater(void *pvParameters)
 void TaskRTC(void *pvParameters)
 {
   (void) pvParameters;
+  uint8_t lastMinute = 100; //Sets up an impossible value so at first run it will run correctly
+  uint8_t waitSecondFinished = 1;
+  
   for(;;)
   {
     rtc_get_time();
-    
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
+
+    if(currentTime.minute() != lastMinute)
+    {
+      if(lastMinute != 100)
+      {
+        xEventGroupSetBits(rtc_event_group, FEED);
+      }
+      lastMinute = currentTime.minute(); 
+    }
+
+    if((currentTime.second() == 25 || currentTime.second() == 55) && waitSecondFinished)
+    {
+      xEventGroupSetBits(rtc_event_group, SENSOR);
+      waitSecondFinished = 0;
+    }
+    if(currentTime.second() == 26 || currentTime.second() ==  56)
+    {
+      waitSecondFinished = 1;
+    }
+    vTaskDelay(100 / portTICK_PERIOD_MS);
   }
 }
 
@@ -114,6 +153,7 @@ void TaskRTC(void *pvParameters)
 
 void rtc_get_time()
 {
+  //Update time inside the global variable currentTime
   currentTime = RTC.now();
 }
 
