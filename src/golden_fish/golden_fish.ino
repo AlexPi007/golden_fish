@@ -23,21 +23,36 @@
 //Global variables
 RTC_DS1307 RTC;
 DateTime currentTime;
+bool mustFeed = true;
+bool toDrain = true;
+bool waitSecondFinished = true;
+
+#define MONDAY 1
+#define TUESDAY 2
+#define WEDNESDAY 3
+#define THURSDAY 4
+#define FRIDAY 5
+#define SATURDAY 6
+#define SUNDAY 7
 
 EventGroupHandle_t rtc_event_group;
 int LIGHT = (1 << 0);
 int FEED = (1 << 1);
-int DRAIN = (1 << 2);
+int WATER = (1 << 2);
 int SENSOR = (1 << 3);
 
 //Forward task functions declarations
 void TaskSensorsRead(void *pvParameters);
 void TaskFeed(void *pvParameters);
-void TaskLWater(void *pvParameters);
-void TaskLRTC(void *pvParameters);
+void TaskWater(void *pvParameters);
+void TaskRTC(void *pvParameters);
 
 //Forward general function declarations
 void rtc_get_time();
+void feed_time_manager();
+void sensor_read_time_manager();
+void water_time_manager();
+void TEST_TIME();
 
 
 void setup()
@@ -45,6 +60,7 @@ void setup()
   Serial.begin(9600);
   Wire.begin();
   RTC.begin();
+  
   if (!RTC.isrunning())
   {
     Serial.println("RTC is NOT running!");
@@ -56,9 +72,9 @@ void setup()
   //portMAX_DELAY makes a mutex wait forever
   if( rtc_event_group == NULL )
   {
-      /* The event group was not created because there was insufficient
-      FreeRTOS heap available. */
-      Serial.println("Problem");
+    /* The event group was not created because there was insufficient
+    FreeRTOS heap available. */
+    Serial.println("Problem rtc_event_group");
   }
   
   //Tasks init:
@@ -100,7 +116,6 @@ void TaskFeed(void *pvParameters)
     //Calling task once every 60s
     xEventGroupWaitBits(rtc_event_group, FEED, pdTRUE, pdTRUE, portMAX_DELAY);
     Serial.println("FEED");
-    vTaskDelay(3000 / portTICK_PERIOD_MS);
   }
 }
 
@@ -111,41 +126,25 @@ void TaskWater(void *pvParameters)
 
    for (;;)
   {
-    //@TODO Add continous functionality
+    xEventGroupWaitBits(rtc_event_group, WATER, pdTRUE, pdTRUE, portMAX_DELAY);
     vTaskDelay(100 / portTICK_PERIOD_MS);
-    //@TODO Move motor to change water, check with sensors to start and stop it, if unsure full stop
+    //@TODO log when draining begun and calculate when to stop
+    //@TODO log when starting to fill and calculate when to stop
   }
 }
 
 void TaskRTC(void *pvParameters)
 {
   (void) pvParameters;
-  uint8_t lastMinute = 100; //Sets up an impossible value so at first run it will run correctly
-  uint8_t waitSecondFinished = 1;
   
   for(;;)
   {
     rtc_get_time();
 
-    if(currentTime.minute() != lastMinute)
-    {
-      if(lastMinute != 100)
-      {
-        xEventGroupSetBits(rtc_event_group, FEED);
-      }
-      lastMinute = currentTime.minute(); 
-    }
-
-    if((currentTime.second() == 25 || currentTime.second() == 55) && waitSecondFinished)
-    {
-      xEventGroupSetBits(rtc_event_group, SENSOR);
-      waitSecondFinished = 0;
-    }
-    if(currentTime.second() == 26 || currentTime.second() ==  56)
-    {
-      waitSecondFinished = 1;
-    }
-    vTaskDelay(100 / portTICK_PERIOD_MS);
+    feed_time_manager();
+    water_time_manager();
+    sensor_read_time_manager();
+//    TEST_TIME();
   }
 }
 
@@ -155,5 +154,90 @@ void rtc_get_time()
 {
   //Update time inside the global variable currentTime
   currentTime = RTC.now();
+}
+
+void feed_time_manager()
+{
+  /*This functions sets the feeding every 5 hours*/
+  if(currentTime.hour() == 9)
+  {
+    if(mustFeed)
+    {
+      xEventGroupSetBits(rtc_event_group, FEED);
+      mustFeed = false;
+    }
+  }
+  if(currentTime.hour() == 10)
+  {
+    mustFeed = true;
+  }
+  
+  if(currentTime.hour() == 14)
+  {
+    if(mustFeed)
+    {
+      xEventGroupSetBits(rtc_event_group, FEED);
+      mustFeed = false;
+    }
+  }
+  if(currentTime.hour() == 15)
+  {
+   mustFeed = true;
+  }
+  
+  if(currentTime.hour() == 19)
+  {
+    if(mustFeed)
+    {
+      xEventGroupSetBits(rtc_event_group, FEED);
+      mustFeed = false;
+    }
+  }
+  if(currentTime.hour() == 20)
+  {
+    mustFeed = true;
+  }
+}
+
+void water_time_manager()
+{
+  if((currentTime.dayOfWeek() == WEDNESDAY && toDrain) && (currentTime.hour() == 11))
+  {
+    xEventGroupSetBits(rtc_event_group, WATER);
+    toDrain = false;
+  }
+  if(currentTime.dayOfWeek() != WEDNESDAY)
+  {
+    toDrain = true;
+  }
+}
+
+void TEST_TIME()
+{
+  Serial.print(currentTime.year(), DEC);
+  Serial.print('/');
+  Serial.print(currentTime.month(), DEC);
+  Serial.print('/');
+  Serial.print(currentTime.day(), DEC);
+  Serial.print(' ');
+  Serial.print(currentTime.hour(), DEC);
+  Serial.print(':');
+  Serial.print(currentTime.minute(), DEC);
+  Serial.print(':');
+  Serial.print(currentTime.second(), DEC);
+  Serial.println(); 
+}
+
+void sensor_read_time_manager()
+{
+  if((currentTime.second() == 25 || currentTime.second() == 55) && waitSecondFinished)
+  {
+    xEventGroupSetBits(rtc_event_group, SENSOR);
+    waitSecondFinished = false;
+  }
+  if(currentTime.second() == 26 || currentTime.second() ==  56)
+  {
+    waitSecondFinished = true;
+  }
 }
 
